@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+    ports:
+      -'5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  volumes:
+    postgres_data:
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/postgres
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        - DB_URL=postgresql://postgres:mysecretpassword@postgres:5432/postgres
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres:5432/postgres
+    depends_on:
+      - postgres
+    
+  ws:
+    build:
+      context: .
+      dockerfile: docker/ws.Dockerfile
+    ports:
+      - '8001:8001'
+    environment:
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@localhost:5432/postgres
+    depends_on:
+      - postgres
